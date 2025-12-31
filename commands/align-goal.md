@@ -20,11 +20,15 @@ The following 3 points must be confirmed:
 2. **Deliverables (deliverables)**: What should be produced
 3. **Completion criteria (definition_of_done)**: Externally verifiable completion criteria
 
+## Important: Interactive Questions
+
+**All questions to the user MUST use the `AskUserQuestion` tool (interactive question).** Do not ask questions in plain text output. This ensures structured user interaction and proper response handling.
+
 ## Dialogue Flow
 
 ### Step 1: Understanding Requirements
 
-Deep-dive into user requirements. Ask questions about ambiguous points.
+Deep-dive into user requirements. Ask questions about ambiguous points using `AskUserQuestion` tool.
 
 **Acceptable ambiguity**: "How to do it" (implementation approach) → Resolved through loop exploration
 **Unacceptable ambiguity**: "What to achieve" "When is it complete"
