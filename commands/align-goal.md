@@ -4,6 +4,11 @@ argument-hint: "[initial request or task description]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Grep", "AskUserQuestion"]
 ---
 
+<!--
+Purpose: Detect and reduce ambiguity or missing decision points in requirements,
+then form agreement and record clarifications directly in the spec file.
+-->
+
 # Align Goal Command
 
 Interactively form agreement and generate the AoT Loop state file.
@@ -26,16 +31,59 @@ The following 3 points must be confirmed:
 
 ## Dialogue Flow
 
-### Step 1: Understanding Requirements
+### Step 1: Understanding Requirements and Resolving Ambiguity
 
-Deep-dive into user requirements. Ask questions about ambiguous points using `AskUserQuestion` tool.
+Goal: Gain full understanding while detecting and reducing ambiguity or missing decision points.
+
+#### 1.1 Initial Understanding
+
+Deep-dive into user requirements and background context. Understand:
+- Why is this work needed? (motivation, business context)
+- What triggered this request?
+- What are the constraints or prerequisites?
+
+#### 1.2 Ambiguity & Coverage Scan
+
+Systematically scan for gaps and ambiguities. Consider:
+- **Edge cases**: Boundary conditions, empty inputs, maximum values
+- **Negative flows**: Error handling, failure scenarios, rollback behavior
+- **Integration points**: How this interacts with existing systems
+- **Scope boundaries**: What is explicitly out of scope
+
+List all detected ambiguities and missing decision points.
+
+#### 1.3 Self-Resolution
+
+For each ambiguity detected, first attempt to resolve it on your own:
+- Can it be inferred from context or existing code?
+- Is there a standard practice or convention to follow?
+- Does the codebase already handle similar cases?
+
+Exclude anything you are able to fully resolve with confidence.
+
+#### 1.4 Filtering
+
+Exclude from clarification questions:
+- Items where it is better to defer the decision to implementation phase ("How to do it")
+- Cases where all potential answers would be low impact
+- Technical details that don't affect the goal or completion criteria
 
 **Acceptable ambiguity**: "How to do it" (implementation approach) → Resolved through loop exploration
 **Unacceptable ambiguity**: "What to achieve" "When is it complete"
 
+#### 1.5 Clarification
+
+Use `AskUserQuestion` tool to ask the user for remaining ambiguities.
+
+Guidelines:
+- Prefer structured choices over open-ended questions
+- Open-ended questions should be treated as a last resort
+- Batch related questions to minimize interruptions
+- Provide context for why each clarification is needed
+
 ### Step 2: Extraction/Structuring
 
-Organize understood content and present in the following format:
+Organize understood content and present in the following format. **Record all clarifications and resolved ambiguities** so they are preserved for future reference:
 
 ```
 ## Agreement Confirmation
@@ -43,6 +91,15 @@ Organize understood content and present in the following format:
 **Background purpose**: [Why this work is needed]
 
 **Deliverables**: [What will be produced specifically]
+
+**Clarifications** (resolved ambiguities):
+- [Question/Ambiguity]: [Resolution/Decision]
+- [Question/Ambiguity]: [Resolution/Decision]
+...
+
+**Scope boundaries**:
+- In scope: [explicit inclusions]
+- Out of scope: [explicit exclusions]
 
 **Completion criteria** (Checklist format):
 - [ ] Functional requirements
@@ -156,6 +213,12 @@ objective:
   background_intent: "[background purpose]"
   deliverables: "[deliverables summary]"
   definition_of_done: "[human-readable completion criteria summary]"
+  clarifications:
+    - question: "[ambiguity/question]"
+      resolution: "[decision/answer]"
+  scope:
+    in_scope: ["explicit inclusions"]
+    out_of_scope: ["explicit exclusions"]
   constraints:
     max_iterations: 20
     max_parallel_agents: 3
