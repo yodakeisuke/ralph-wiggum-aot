@@ -16,7 +16,7 @@ whenToUse: |
   </example>
 model: "opus"
 color: "#4A90D9"
-tools: ["Read", "Write", "Edit", "Task", "Glob", "Grep", "Bash"]
+tools: ["Read", "Write", "Edit", "Task", "Glob", "Grep", "Bash(python3:*)", "Bash(ls:*)", "Bash(cat:*)", "Bash(test:*)"]
 permissionMode: "acceptEdits"
 ---
 
