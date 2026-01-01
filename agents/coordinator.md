@@ -55,6 +55,19 @@ Use the Read tool with file_path=".claude/aot-loop-state.md"
 7. **Evaluate**: Assess progress (DAG shrinking?)
 8. **Update State**: Write changes to state file
 
+## CRITICAL: You MUST Make Progress Every Iteration
+
+**If you finish an iteration without resolving any Atom, you have FAILED.**
+
+Each iteration MUST:
+1. Pick at least one executable Atom
+2. Update its status to `in_progress` BEFORE spawning worker
+3. Spawn a worker and WAIT for its result (do NOT use run_in_background)
+4. After worker returns, update the Atom status to `resolved` and add Bindings
+5. If worker failed, keep Atom as `pending` but log the issue
+
+**DO NOT exit without making state changes. The loop will stall and eventually stop.**
+
 ## Reference Skills
 
 Load these skills for detailed guidance:
@@ -70,7 +83,7 @@ Load these skills for detailed guidance:
 ### Reading State
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/read_state.py
+python3 skills/state-contract/scripts/read_state.py
 ```
 
 Returns JSON with `atoms`, `executable_atoms`, `bindings`, `status`, etc.
@@ -80,10 +93,10 @@ Use this at the START of each iteration to understand current state.
 
 ```bash
 # Before spawning worker
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/update_atom.py A1 in_progress
+python3 skills/state-contract/scripts/update_atom.py A1 in_progress
 
 # After worker completes successfully
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/update_atom.py A1 resolved
+python3 skills/state-contract/scripts/update_atom.py A1 resolved
 ```
 
 ### Adding Bindings
@@ -91,7 +104,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/update_atom.py A1 re
 After an Atom is resolved, record its results:
 
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/add_binding.py A1 \
+python3 skills/state-contract/scripts/add_binding.py A1 \
   --summary "Fetched source text and identified 5 main sections" \
   --artifacts "./rinzairoku/source/original.md,./rinzairoku/structure.md"
 ```
@@ -100,10 +113,10 @@ python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/add_binding.py A1 \
 
 ```bash
 # When all atoms resolved and verified
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/set_status.py completed
+python3 skills/state-contract/scripts/set_status.py completed
 
 # On unrecoverable error
-python3 ${CLAUDE_PLUGIN_ROOT}/skills/state-contract/scripts/set_status.py stopped --reason "All OR branches exhausted"
+python3 skills/state-contract/scripts/set_status.py stopped --reason "All OR branches exhausted"
 ```
 
 **IMPORTANT**: Execute these commands using the `Bash` tool. Do NOT just write them as text!
@@ -183,6 +196,44 @@ Parameters:
 ```
 
 **DO NOT just write the above as text. Actually use the Task tool!**
+
+### COMPLETE EXAMPLE: Executing One Iteration
+
+Here is exactly what you should do in one iteration:
+
+**Step 1: Read state**
+```
+Use Bash tool: python3 skills/state-contract/scripts/read_state.py
+```
+Result shows A1 is executable.
+
+**Step 2: Update A1 to in_progress**
+```
+Use Bash tool: python3 skills/state-contract/scripts/update_atom.py A1 in_progress
+```
+
+**Step 3: Spawn worker (WAIT for result)**
+```
+Use Task tool:
+  subagent_type: "ralph-wiggum-aot:aot-worker"
+  description: "Execute A1"
+  prompt: "Execute Atom A1: [description]..."
+  (DO NOT set run_in_background)
+```
+
+**Step 4: After worker returns, update state**
+If worker succeeded:
+```
+Use Bash tool: python3 skills/state-contract/scripts/update_atom.py A1 resolved
+Use Bash tool: python3 skills/state-contract/scripts/add_binding.py A1 --summary "..." --artifacts "..."
+```
+
+If worker failed:
+```
+Use Bash tool: python3 skills/state-contract/scripts/update_atom.py A1 pending
+```
+
+**Step 5: Exit** - The SubagentStop hook will continue the loop.
 
 ### Agent Types
 
